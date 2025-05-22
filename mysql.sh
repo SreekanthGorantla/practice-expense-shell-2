@@ -30,13 +30,13 @@ CHECK_ROOT(){
 ##############################################################################
 # Main
 ##############################################################################
-LOG_FOLDER="/var/log/expense-shell-2"
+LOGS_FOLDER="/var/log/expense-logs2"
 LOG_FILE=$(echo $0 | cut -d "." -f1)
 TIMESTAMP=$(date +%Y-%m-%d-%H-%M-%S)
-LOG_FILE_NAME="$LOG_FOLDER/$LOG_FILE-$TIMESTAMP.log"
+LOG_FILE_NAME="$LOGS_FOLDER/$LOG_FILE-$TIMESTAMP.log"
 
 echo ================================================================
-mkdir -p $LOG_FOLDER &>> $LOG_FILE_NAME
+mkdir -p $LOGS_FOLDER &>> $LOG_FILE_NAME
 echo ================================================================
 echo "Script started executing at: $TIMESTAMP" &>> $LOG_FILE_NAME
 echo ================================================================
