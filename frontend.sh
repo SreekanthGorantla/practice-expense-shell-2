@@ -16,7 +16,7 @@ VALIDATE(){
         echo -e "$2 ... $R FAILURE $N"
         exit 1
     else
-        echo -2 "$2 ... $G SUCCESS $N"
+        echo -e "$2 ... $G SUCCESS $N"
     fi
 }
 
@@ -30,7 +30,7 @@ CHECK_ROOT(){
 ##############################################################################
 # Main
 ##############################################################################
-LOG_FOLDER="/var/log/expense-shell-2"
+LOG_FOLDER="/var/log/frontend-shell-2"
 LOG_FILE=$(echo $0 | cut -d "." -f1)
 TIMESTAMP=$(date +%Y-%m-%d-%H-%M-%S)
 LOG_FILE_NAME="$LOG_FOLDER/$LOG_FILE-$TIMESTAMP.log"

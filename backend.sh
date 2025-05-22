@@ -16,7 +16,7 @@ VALIDATE(){
         echo -e "$2 ... $R FAILURE $N"
         exit 1
     else
-        echo -2 "$2 ... $G SUCCESS $N"
+        echo -e "$2 ... $G SUCCESS $N"
     fi
 }
 
@@ -30,49 +30,112 @@ CHECK_ROOT(){
 ##############################################################################
 # Main
 ##############################################################################
-LOG_FOLDER="/var/log/expense-shell-2"
+LOG_FOLDER="/var/log/backend-shell-2"
 LOG_FILE=$(echo $0 | cut -d "." -f1)
 TIMESTAMP=$(date +%Y-%m-%d-%H-%M-%S)
 LOG_FILE_NAME="$LOG_FOLDER/$LOG_FILE-$TIMESTAMP.log"
 
-echo ================================================================
-mkdir -p $LOG_FOLDER &>> $LOG_FILE_NAME
-echo ================================================================
+#########################################################
+# create or replace log file directory
+#########################################################
+mkdir -p $LOG_FOLDER
+echo =====================================================
 echo "Script started executing at: $TIMESTAMP" &>> $LOG_FILE_NAME
-echo ================================================================
+echo =====================================================
 CHECK_ROOT
-echo ================================================================
+echo =====================================================
 
+##########################################
+# disable,enable nodejs version
+##########################################
+dnf module disable nodejs -y  &>> $LOG_FILE_NAME
+VALIDATE $? "Disable existing Nodejs"
+echo =====================================================
 
+dnf module enable nodejs:20 -y  &>> $LOG_FILE_NAME
+VALIDATE $? "Enable latest Nodejs"
+echo =====================================================
 
+##########################################
+# Install nodejs version
+##########################################
+dnf install nodejs -y  &>> $LOG_FILE_NAME
+VALIDATE $? "Install latest Nodejs"
+echo =====================================================
 
-dnf module disable nodejs -y
+##########################################
+# Add expense user
+##########################################
+id expense  &>> $LOG_FILE_NAME
+if [ $? -ne 0 ]
+then
+    useradd expense  &>> $LOG_FILE_NAME
+    VALIDATE $? "Adding expense user"
+else
+    echo -e "Expense user already exists ... $Y SKIPPING $N"
+fi
+echo =====================================================
 
-dnf module enable nodejs:20 -y
+##########################################
+# Create /app directory
+##########################################
+mkdir /app  &>> $LOG_FILE_NAME
+VALIDATE $? "Creating app directory"
+echo =====================================================
 
-dnf install nodejs -y
+##########################################
+# Download backend
+##########################################
+curl -o /tmp/backend.zip https://expense-builds.s3.us-east-1.amazonaws.com/expense-backend-v2.zip  &>> $LOG_FILE_NAME
+VALIDATE $? "Downloading backed"
+echo =====================================================
 
-
-useradd expense
-
-mkdir /app
-
-curl -o /tmp/backend.zip https://expense-builds.s3.us-east-1.amazonaws.com/expense-backend-v2.zip
-
+##########################################
+# Remove everything from /app folder
+##########################################
 cd /app
+rm-rf /app/*
+echo =====================================================
 
-npm install
+##########################################
+# Remove everything from /app folder
+##########################################
+unzip /tmp/backend.zip   &>> $LOG_FILE_NAME
+VALIDATE $? "Unzipping backend code"
+echo =====================================================
 
-vim /etc/systemd/system/backend.service
+##########################################
+# Install npm dependencies
+##########################################
+npm install  &>> $LOG_FILE_NAME
+VALIDATE $? "Installing Dependencies"
+echo =====================================================
 
-systemctl daemon-reload
+####################################################################################
+# Copy backend.service to /etc/systemd/system
+####################################################################################
+cp /home/ec2-user/practice-expense-shell-2/backend.service /etc/systemd/system/backend.service
+VALIDATE $? "Copy backend.service"
+echo =====================================================
 
-systemctl start backend
+##########################################
+# Prepare MySQL backend
+##########################################
+dnf install mysql -y  &>> $LOG_FILE_NAME
+VALIDATE $? "Install mysql on backend"
 
-systemctl enable backend
+mysql -h mysql.sreeaws.space -uroot -pExpenseApp@1 < /app/schema/backend.sql &>> $LOG_FILE_NAME
+VALIDATE $? "Setting up transactions schema"
+echo =====================================================
 
-dnf install mysql -y
+systemctl daemon-reload  &>> $LOG_FILE_NAME
+VALIDATE $? "Deamon reload"
+echo =====================================================
 
-mysql -h <MYSQL-SERVER-IPADDRESS> -uroot -pExpenseApp@1 < /app/schema/backend.sql
+systemctl enable backend  &>> $LOG_FILE_NAME
+VALIDATE $? "Enable backend service"
+echo =====================================================
 
-systemctl restart backend
+systemctl restart backend  &>> $LOG_FILE_NAME
+VALIDATE $? "Start backend service"
+echo =====================================================
