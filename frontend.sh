@@ -35,28 +35,67 @@ LOG_FILE=$(echo $0 | cut -d "." -f1)
 TIMESTAMP=$(date +%Y-%m-%d-%H-%M-%S)
 LOG_FILE_NAME="$LOG_FOLDER/$LOG_FILE-$TIMESTAMP.log"
 
-echo ================================================================
-mkdir -p $LOG_FOLDER &>> $LOG_FILE_NAME
-echo ================================================================
+
+mkdir -p $LOG_FOLDER
+echo =====================================================
 echo "Script started executing at: $TIMESTAMP" &>> $LOG_FILE_NAME
-echo ================================================================
+echo =====================================================
 CHECK_ROOT
-echo ================================================================
+echo =====================================================
 
-dnf install nginx -y 
+############################################
+# Install, enable and start Nginx
+############################################
+dnf install nginx -y  &>> $LOG_FILE_NAME
+VALIDATE $? "Installing Nginx"
+echo =====================================================
 
-systemctl enable nginx
+systemctl enable nginx &>> $LOG_FILE_NAME
+VALIDATE $? "Enabling Nginx"
+echo =====================================================
 
-systemctl start nginx
+systemctl start nginx &>> $LOG_FILE_NAME
+VALIDATE $? "Starting Nginx"
+echo =====================================================
 
+#############################################################
+# Removing existing version of code from /usr/share/nginx/html
+#############################################################
 rm -rf /usr/share/nginx/html/*
+VALIDATE $? "Removing existing version of code"
+echo =====================================================
 
+############################################
+# Downloading frontend code
+############################################
 curl -o /tmp/frontend.zip https://expense-builds.s3.us-east-1.amazonaws.com/expense-frontend-v2.zip
+VALIDATE $? "Downloading frontend code"
+echo =====================================================
 
-cd /usr/share/nginx/html
+############################################
+# Moving HTML directory
+############################################
+cd /usr/share/nginx/html  &>> $LOG_FILE_NAME
+VALIDATE $? "Moving to HTML directory"
+echo =====================================================
 
-unzip /tmp/frontend.zip
+############################################
+# Unzipping Frontend code
+############################################
+unzip /tmp/frontend.zip  &>> $LOG_FILE_NAME
+VALIDATE $? "Unzipping frontend code"
+echo =====================================================
 
-vim /etc/nginx/default.d/expense.conf
+############################################
+# copy expense.conf to /etc/nginx/default.d
+############################################
+cp /home/ec2-user/practice-expense-shell-2/expense.conf /etc/nginx/default.d/expense.conf
+VALIDATE $? "Copy expense conf file"
+echo =====================================================
 
-systemctl restart nginx
+############################################
+# Restart Nginx
+############################################
+systemctl restart nginx  &>> $LOG_FILE_NAME
+VALIDATE $? "Restart Nginx"
+echo =====================================================
