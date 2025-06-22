@@ -23,7 +23,7 @@ VALIDATE(){
 CHECK_ROOT(){
     if [ $USERID -ne 0 ]
     then
-        echo "Error:: You need sudo access to execute this command"
+        echo "Error:: You must have sudo access to execute this script."
         exit 1
     fi
 }
@@ -45,15 +45,13 @@ echo ================================================================
 # Install, Enable and Start mysql server
 #############################################
 dnf install mysql-server -y &>> $LOG_FILE_NAME
-VALIDATE $? "Installing MySQL-server"
+VALIDATE $? "Installing MySQL server"
 echo ================================================================
-
 systemctl enable mysqld &>> $LOG_FILE_NAME
-VALIDATE $? "Enable mysqld"
+VALIDATE $? "Enabling MySQL server"
 echo ================================================================
-
 systemctl start mysqld &>> $LOG_FILE_NAME
-VALIDATE $? "Start mysqld"
+VALIDATE $? "Starting MySQL server"
 echo ================================================================
 
 ##############################################################################
@@ -63,10 +61,10 @@ mysql -h mysql.sreeaws.space -u root -pExpenseApp@1 -e 'show databases;' &>> $LO
 
 if [ $? -ne 0 ]
 then
-    echo "MySQL root password not setup" &>> $LOG_FILE_NAME
+    echo "MySQL root password not setup"  &>> $LOG_FILE_NAME
     mysql_secure_installation --set-root-pass ExpenseApp@1
-    VALIDATE $? "Setting root password"
+    VALIDATE $? "Setting up MySQL root password"
 else
-    echo -e "MySQL Root password already setup ... $Y SKIPPING $N"
+    echo -e "MySQL root password already setup ... $Y SKIPPING $N"
 fi
 echo ================================================================
